@@ -25,17 +25,8 @@ public class Main {
 		System.out.println();
 	}
 
-	public static void testClosingBrackets() {
-		String f = "(a|b)&c";
-		System.out.println(Parser.getClosingBracketIndexToOpenBracket(f, 0));
-	}
-	public static void testOpeningBrackets() {
-		String f = "a&(a|!c)&b";
-		System.out.println(Parser.getFirstOpeningBracketsOccurence(f));
-	}
-
 	public static void testParseAST() {
-		String f = "(((a|b)&c)>(d&a))";
+		String f = "((a|b)&d)&e";
 		AST<Character> r = new AST<>();
 		Parser.parseIntoAST(f, r);
 		assert(r != null);

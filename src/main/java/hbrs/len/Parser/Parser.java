@@ -38,7 +38,7 @@ public class Parser {
 		}
 		// just an operator
 		if (expression.length() == 1) {
-			astOfVar = new AST<>(expression.charAt(0));
+			astOfVar.setRoot(new Node<>(expression.charAt(0)));
 			return;
 		}
 
@@ -91,7 +91,6 @@ public class Parser {
 		*/
 		int lastBracketsIndex = getClosingBracketIndexToOpenBracket
 						(expression, firstBracketsIndex);
-		System.out.println("{" + firstBracketsIndex + ", " + lastBracketsIndex + "}");
 
 		/*
 		 * check if there exists something like
@@ -103,8 +102,6 @@ public class Parser {
 			// root is in the brackets
 			String subexpression = expression.substring(firstBracketsIndex+1,
 									lastBracketsIndex);
-			System.out.println("Expression: \t" + expression);
-			System.out.println("Subexpression: \t" + subexpression);
 			parseIntoAST(subexpression, astOfVar);
 			return;
 		}
@@ -117,14 +114,32 @@ public class Parser {
 		char rootOperator = expression.charAt(indexOfOperatorAfterBrackets);
 		astOfVar.setRoot(new Node<>(rootOperator));
 
+
+		// ↑ Works ↑ !
+
+
 		/*
 		 * 2:
 		 *
 		 * Construct the leftChild AST from root
 		 * so everything left from rootOperator
 		*/
-		//parseIntoAST(, astOfVar.);
+		//int leftSubexpressionEndIndex = indexOfOperatorAfterBrackets - 1;
+		String leftSubexpression = expression.substring(0, indexOfOperatorAfterBrackets);
+		AST<Character> left = new AST<>();
+		parseIntoAST(leftSubexpression, left);
+		astOfVar.add(left);
 
+		/*
+		 * 2:
+		 *
+		 * Construct the rightChild AST from root
+		 * so everything right from rootOperator
+		*/
+		String rightSubexpression = expression.substring(indexOfOperatorAfterBrackets+1);
+		AST<Character> right = new AST<>();
+		parseIntoAST(rightSubexpression, right);
+		astOfVar.add(right);
 	}
 
 	/**
@@ -133,7 +148,7 @@ public class Parser {
 	 * @param openBracketIndex index of opening bracket
 	 * @return index of closing bracket associated to openBracket
 	 */
-	public static
+	private static
 	int getClosingBracketIndexToOpenBracket(String expression, int openBracketIndex) {
 		assert(expression.charAt(openBracketIndex) == '(');
 		/*
@@ -165,7 +180,7 @@ public class Parser {
 	 * @return is the index of first opening bracket
 	 * if no opening bracket: return -1
 	 */
-	public static int getFirstOpeningBracketsOccurence(String expression) {
+	private static int getFirstOpeningBracketsOccurence(String expression) {
 		int firstOpeningBracketIndex = 0;
 		for (int i=0; i<expression.length(); i++) {
 			if (expression.charAt(i) == '(') {
