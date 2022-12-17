@@ -20,16 +20,12 @@ public class Main {
 		System.out.println(ast.toString());
 	}
 
-	public static void testParseOperator() {
-		String f = "(a&b)";
-		System.out.println();
-	}
-
 	public static void testParseAST() {
-		String f = "((a|b)&d)&e";
+		//String f = "((a>b)&(d|e))";
+		//String f = "((a|b)&c)";
+		String f = "!((a&b)|!c)";
 		AST<Character> r = new AST<>();
 		Parser.parseIntoAST(f, r);
-		assert(r != null);
 		System.out.println(r.toString());
 	}
 }

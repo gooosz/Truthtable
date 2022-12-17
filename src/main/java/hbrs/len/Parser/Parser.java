@@ -42,6 +42,18 @@ public class Parser {
 			return;
 		}
 
+		int operatorenCounterIndex = 0;
+		if (getNextOperator(expression, operatorenCounterIndex) == '!') {
+			astOfVar.setRoot(new Node<>('!'));
+			int indexOfNegation = expression.indexOf('!');
+			assert(indexOfNegation >= 0);
+			String subexpression = expression.substring(indexOfNegation+1);
+			AST<Character> negationFormel = new AST<>();
+			parseIntoAST(subexpression, negationFormel);
+			astOfVar.add(negationFormel);
+			return;
+		}
+
 		ArrayList<Integer> posOfOperatorsInExpression = new ArrayList<>(0);
 		// fill positionsOfOperators with the positions of operators in expression
 		for (int i=0; i<expression.length(); i++) {
@@ -113,6 +125,7 @@ public class Parser {
 		*/
 		char rootOperator = expression.charAt(indexOfOperatorAfterBrackets);
 		astOfVar.setRoot(new Node<>(rootOperator));
+
 
 
 		// ↑ Works ↑ !
