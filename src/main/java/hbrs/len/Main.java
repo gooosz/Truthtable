@@ -1,12 +1,8 @@
 package hbrs.len;
 
 import hbrs.len.Datastructures.AST;
-import hbrs.len.Datastructures.Node;
 import hbrs.len.LogikModul.Expression;
 import hbrs.len.Parser.Parser;
-import hbrs.len.Parser.Parser2;
-
-import java.util.ArrayList;
 
 public class Main {
 	public static void main(String[] args) {
@@ -15,7 +11,7 @@ public class Main {
 
 	public static void testParser2() {
 		String f = "!(a&b)|!c|a";
-		Expression e = Parser2.parseExpression(f);
+		Expression e = Parser.parseExpression(f);
 		System.out.println(e);
 	}
 
@@ -34,8 +30,7 @@ public class Main {
 		//String f = "(a>b)&(d|e)";
 		//String f = "((a|b)&c)";
 		String f = "!(a|b)&c|!d";
-		AST<Character> r = new AST<>();
-		Parser.parseExpressionIntoAST(f, r);
+		AST<Character> r = Parser.parseExpression(f);
 		System.out.println(r.toString());
 	}
 }

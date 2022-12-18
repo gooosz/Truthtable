@@ -1,210 +1,274 @@
 package hbrs.len.Parser;
 
-
-import hbrs.len.Datastructures.AST;
-import hbrs.len.Datastructures.Node;
+import hbrs.len.LogikModul.Expression;
 
 import java.util.ArrayList;
 
 public class Parser {
-	private static String expression = "";
-	/*
-	 * &: Conjunction
-	 * |: Disjunction
-	 * >: Subjunction
-	 * !: Negation
-	 * with brackets
-	 */
-	public static final char[] operators = {'&', '|', '>', '!'};
-
-
-	public static String getExpression() {
-		return expression;
-	}
-	public static void setExpression(String newExpression) {
-		expression = newExpression;
-	}
-
-	public static void parseExpression(String expression) {
-
-	}
-
-	/**
-	 *
-	 * @param expression formel
-	 * @param astOfVar expression as a AST, may be null at first
-	 * parses expression and creates an Abstract Syntax Tree
-	 * out of it
-	 */
-	public static void parseExpressionIntoAST(String expression, AST<Character> astOfVar) {
+	private static final char[] operators = {'&', '|', '>', '!'};
+	public static Expression parseExpression(String expression) {
 		if (expression == null || expression.length() == 0) {
-			return;
+			return null;
 		}
-		// just an operator
 		if (expression.length() == 1) {
-			astOfVar.setRoot(new Node<>(expression.charAt(0)));
-			return;
+			return new Expression(expression.charAt(0));
 		}
 
-		// fill positionsOfOperators with the positions of operators in expression
-		ArrayList<Integer> posOfOperatorsInExpression = getAllOperatorIndexInExpression(expression);
-		if (posOfOperatorsInExpression.size() == 0) {
-			return;
-		}
-
-		int nextOperatorIndexInExpression = posOfOperatorsInExpression.get(0);
-		char nextOperator = expression.charAt(nextOperatorIndexInExpression);
-		if (nextOperator == '!') {
-			/*
-			 * check if immediately after () of !
-			 * follows another operator
-			 * that operator is root then
-			*/
-			if (nextOperatorIndexInExpression+1 < expression.length()) {
-				char charAfterNegation = expression.charAt(nextOperatorIndexInExpression+1);
-				if (charAfterNegation == '(') {
-					// search for closing brackets
-					int indexOfClosingBracket = getClosingBracketIndexToOpenBracket(expression,
-								nextOperatorIndexInExpression+1);
-					if (indexOfClosingBracket+1 < expression.length()) {
-						// operator afterwards is root
-						passRootIntoAST(expression,
-							astOfVar,
-							indexOfClosingBracket+1,
-							true,
-							true);
-						return;
-					} else {
-						// No operator after brackets -> '!' is root
-						passRootIntoAST(expression,
-							astOfVar,
-							nextOperatorIndexInExpression,
-							false,
-							true);
-						return;
-					}
-				} else {
-					// No bracket aka ! is root
-					passRootIntoAST(expression,
-						astOfVar,
-						nextOperatorIndexInExpression,
-						false,
-						true);
-					return;
+		/*
+		 * Get all root operator indizes
+		*/
+		ArrayList<Integer> rootOperatorIndizes = getRootOperatorIndexe(expression);
+		if (rootOperatorIndizes == null) {
+			// Strip brackets
+			for (int i=0; i<expression.length(); i++) {
+				char currentChar = expression.charAt(i);
+				if (currentChar != '(' && currentChar != ')') {
+					return new Expression(currentChar);
 				}
 			}
+			System.out.println("Error no variable!");
+			return null;
 		}
+
+		// Construct root
+		if (rootOperatorIndizes.size() > 1) {
+			// Still TODO
+			/*
+			 * (a&b)|(c&d)|(e&f)
+			 * or
+			 * (a&b)|(c&d)|(e&f)|(g&h)
+			 * etc
+			*/
+
+			// root operators must be the same!!!
+			for (int k=0; k<rootOperatorIndizes.size()-1; k++) {
+				int indexOperator1 = rootOperatorIndizes.get(k);
+				int indexOperator2 = rootOperatorIndizes.get(k+1);
+				// if they are not equal, use left to right
+				// by applying brackets around the equal ones
+				if (expression.charAt(indexOperator1) != expression.charAt(indexOperator2)) {
+					String expressionLeftToRight = "("
+						+ expression.substring(0, indexOperator2)
+						+ ")"
+						+ expression.substring(indexOperator2);
+					return parseExpression(expressionLeftToRight);
+				}
+			}
+			char rootOperator = expression.charAt(rootOperatorIndizes.get(0));
+			Expression root = new Expression(rootOperator);
+			/* there is always one child more than amount of rootOperators
+			 * startStopSubExpression[0] inclusive
+			 * startStopSubExpression[0] exclusive
+			*/
+			int[] startStopSubExpression = {0, rootOperatorIndizes.get(0)};
+			for (int i=0; i<rootOperatorIndizes.size()+1; i++) {
+				/*
+				 * start of subexpression
+				*/
+				String subexpression = expression.substring(startStopSubExpression[0],
+										startStopSubExpression[1]);
+				Expression child = parseExpression(subexpression);
+				root.add(child);
+
+				// update to next subexpression index range values
+				if (i >= rootOperatorIndizes.size()) {
+					startStopSubExpression[0] = 0;
+				} else {
+					startStopSubExpression[0] = rootOperatorIndizes.get(i)+1;
+				}
+				// after last operator, the end is the end
+				if (i >= rootOperatorIndizes.size()-1) {
+					startStopSubExpression[1] = expression.length();
+				} else {
+					startStopSubExpression[1] = rootOperatorIndizes.get(i+1);
+				}
+			}
+			// Still TODO
+			return root;
+		}
+
+		rootOperatorIndizes.subList(1, rootOperatorIndizes.size()).clear();
+		// only one root operator
+		char rootOperator = expression.charAt(rootOperatorIndizes.get(0));
+		Expression root = new Expression(rootOperator);
 		/*
-		if (getNextOperator(expression, operatorenCounterIndex) == '!') {
-			astOfVar.setRoot(new Node<>('!'));
-			int indexOfNegation = expression.indexOf('!');
-			assert(indexOfNegation >= 0);
-			String subexpression = expression.substring(indexOfNegation+1);
-			AST<Character> negationFormel = new AST<>();
-			parseExpressionIntoAST(subexpression, negationFormel);
-			astOfVar.add(negationFormel);
-			return;
-		}
+		 * Construct left and right child
+		 *
+		 * Construct only the right child if root operator is '!'
 		*/
-
-		//astOfVar = new AST<>();
-		/*
-		 * Add all operators to astOfVar
-		 *
-		 * Nodes with children: operator
-		 * Nodes without children: variable
-		 *
-		 * Variables are between the positionsOfOperators
-		 *
-		 * !!! brackets may occur !!!
-		*/
-
-		/*
-		 * 1:
-		 *
-		 * search for the outmost brackets
-		 */
-		int firstBracketsIndex = getFirstOpeningBracketsOccurence(expression);
-		if (firstBracketsIndex == 0) {
-			firstBracketsIndex = getFirstOpeningBracketsOccurence(
-						expression.substring(1));
+		if (rootOperator != '!') {
+			// Construct left child
+			String leftSubexpression = expression.substring(0,
+								rootOperatorIndizes.get(0));
+			Expression leftChild = parseExpression(leftSubexpression);
+			if (leftChild != null) {
+				root.add(leftChild);
+			}
 		}
-		/*
-		 * The expression "(a&b)"
-		 * will now be looked at like it was
-		 * "a&b"
-		*/
-		int lastBracketsIndex = getClosingBracketIndexToOpenBracket
-						(expression, firstBracketsIndex);
-
-		/*
-		 * check if there exists something like
-		 * "(a&b)&c"
-		 * 	 ↑
-		 */
-		int indexOfOperatorAfterBrackets = lastBracketsIndex + 1;
-		if (indexOfOperatorAfterBrackets >= expression.length()) {
-			// root is in the brackets
-			String subexpression = expression.substring(firstBracketsIndex+1,
-									lastBracketsIndex);
-			parseExpressionIntoAST(subexpression, astOfVar);
-			return;
+		// Construct right child
+		String rightSubexpression = expression.substring(rootOperatorIndizes.get(0)+1);
+		Expression rightChild = parseExpression(rightSubexpression);
+		if (rightChild != null) {
+			root.add(rightChild);
 		}
-
-		// ↑ Works ↑ !
-
-		passRootIntoAST(expression, astOfVar, indexOfOperatorAfterBrackets, true, true);
+		return root;
 	}
 
-	private static void passRootIntoAST(String expression,
-					    AST<Character> astOfVar,
-					    int indexOfRootOperator,
-					    boolean hasLeftChild,
-					    boolean hasRightChild) {
-		/*
-		 * check for negation
-		 * negation might be "!!!!!!!!!(expression)"
-		 * so go left one more to get to the root operator
-		 */
-		char rootOperator = expression.charAt(indexOfRootOperator);
-		astOfVar.setRoot(new Node<>(rootOperator));
-
-		/*
-		 * 2:
-		 *
-		 * Construct the leftChild AST from root
-		 * so everything left from rootOperator
-		 */
-		//int leftSubexpressionEndIndex = indexOfOperatorAfterBrackets - 1;
-		if (hasLeftChild) {
-			String leftSubexpression = expression.substring(0, indexOfRootOperator);
-			AST<Character> left = new AST<>();
-			parseExpressionIntoAST(leftSubexpression, left);
-			astOfVar.add(left);
+	/**
+	 * @param expression looks like this:
+	 *        a&b
+	 *        (a&b)|c
+	 *        (a&b)|(c&d)
+	 * @return the top-level operator
+	 */
+	public static ArrayList<Integer> getRootOperatorIndexe(String expression) {
+		if (expression == null || expression.length() == 0 || expression.length() == 1) {
+			return null;
 		}
 
+		// all root operators
+		ArrayList<Integer> rootOperatorsIndexe = getOperatorIndexOutOfBrackets(expression);
+		if (rootOperatorsIndexe == null || rootOperatorsIndexe.size() == 0) {
+			/*
+			 * Strip expression
+			 * so
+			 * (a&b)
+			 * turns into
+			 * a&b
+			*/
+			String expressionWithoutOuterBrackets
+				= expression.substring(1, expression.length()-1);
+			ArrayList<Integer> rootOperatorIndizes
+				= getRootOperatorIndexe(expressionWithoutOuterBrackets);
+			/*
+			 * If rootOperatorIndizes is still zero -> empty expression so return
+			*/
+			if (rootOperatorIndizes == null) {
+				return null;
+			}
+			/*
+			 * Outer brackets where removed so every position is
+			 * the actual position -1
+			 * -> so add 1 to every position
+			 */
+			rootOperatorIndizes.replaceAll(index -> index + 1);
+			/*
+			 * remove ! if another operator is present
+			 */
+			assert(rootOperatorsIndexe != null);
+			removeNegationIfNotRoot(expression, rootOperatorsIndexe);
+			return rootOperatorIndizes;
+		}
 		/*
-		 * 2:
-		 *
-		 * Construct the rightChild AST from root
-		 * so everything right from rootOperator
+		 * remove ! if another operator is present
 		 */
-		if (hasRightChild) {
-			String rightSubexpression = expression.substring(indexOfRootOperator+1);
-			AST<Character> right = new AST<>();
-			parseExpressionIntoAST(rightSubexpression, right);
-			astOfVar.add(right);
+		removeNegationIfNotRoot(expression, rootOperatorsIndexe);
+		return rootOperatorsIndexe;
+	}
+
+	public static void removeNegationIfNotRoot(String expression, ArrayList<Integer> indexOfRootOperators) {
+		if (indexOfRootOperators == null) {
+			return;
+		}
+		for (int i=0; i<indexOfRootOperators.size(); i++) {
+			/*
+			 * Remove the negation ONLY if no other operator is present
+			 */
+			int indexOfOperator = indexOfRootOperators.get(i);
+			if (expression.charAt(indexOfOperator) == '!'
+				&& indexOfRootOperators.size() > 1)
+			{
+				indexOfRootOperators.remove(i);
+				i--;
+			}
 		}
 	}
 
 	/**
-	 *
 	 * @param expression expression
-	 * @param openBracketIndex index of opening bracket
-	 * @return index of closing bracket associated to openBracket
+	 * @return ArrayList of positions of all operators that are outside of brackets
+	 * so
+	 * (a&b)|c returns position of |
+	 * (a&b) returns null
+	 * a&b returns position of &
 	 */
+	public static ArrayList<Integer> getOperatorIndexOutOfBrackets(String expression) {
+		ArrayList<Integer> positionsOfOperators = new ArrayList<>();
+		int[] outerBrackets = getOuterBracketIndexe(expression);
+		// (a&b)
+		if (outerBrackets[0] == 0 && outerBrackets[1] == expression.length()-1) {
+			return null;
+		}
+
+		// search for operator before brackets
+		int bracketCounter = 0;
+		for (int i=0; i<expression.length(); i++) {
+			// ignore everything that is in brackets
+			if (expression.charAt(i) == '(') {
+				bracketCounter++;
+			}
+			if (expression.charAt(i) == ')') {
+				bracketCounter--;
+			}
+			if (isOperator(expression.charAt(i)) && bracketCounter == 0) {
+				// operator is outside any brackets
+				positionsOfOperators.add(i);
+			}
+		}
+		return positionsOfOperators;
+	}
+
+	private static int[] getOuterBracketIndexe(String expression) {
+		int openBracketIndex = getNextBracketIndex(expression);
+		int closeBracketIndex = getClosingBracketIndexFromOpenBracket(expression,
+						openBracketIndex);
+		return new int[]{openBracketIndex, closeBracketIndex};
+	}
+
+	private static boolean isNegated(String expression) {
+		if (expression == null || expression.length() == 0) {
+			return false;
+		}
+		return (expression.charAt(0) == '!');
+	}
+
+	/**
+	 *
+	 * @return Expression that has the operator c as
+	 */
+	private static Expression passOperatorAsRootOperator(String expression,
+							     char rootOperator,
+							     int indexOfRootOperator,
+							     boolean hasLeftSubexpression,
+							     boolean hasRightSubexpression) {
+		Expression root = new Expression(rootOperator);
+
+		if (hasLeftSubexpression) {
+			String leftSubexpression = expression.substring(0, indexOfRootOperator);
+			root.add(parseExpression(leftSubexpression));
+		}
+
+		if (hasRightSubexpression) {
+			String rightSubexpression = expression.substring(indexOfRootOperator+1);
+			root.add(parseExpression(rightSubexpression));
+		}
+		return root;
+	}
+
+
+	private static int getNextBracketIndex(String expression) {
+		for (int i=0; i<expression.length(); i++) {
+			if (expression.charAt(i) == '(') {
+				return i;
+			}
+		}
+		// No bracket found
+		return -1;
+	}
 	private static
-	int getClosingBracketIndexToOpenBracket(String expression, int openBracketIndex) {
+	int getClosingBracketIndexFromOpenBracket(String expression,
+						  int openBracketIndex) {
+		assert(openBracketIndex > 0 && openBracketIndex < expression.length());
 		assert(expression.charAt(openBracketIndex) == '(');
 		/*
 		 * expression may be: a(b&(c&))
@@ -212,7 +276,7 @@ public class Parser {
 		 * -> closingBracketIndex = 8
 		 * innerBracketCount = 1
 		 */
-		int indexOfClosingBracket = 0;
+		int indexOfClosingBracket = -1;
 		int innerBracketCount = 0;
 		for (int i=openBracketIndex+1; i<expression.length(); i++) {
 			if (expression.charAt(i) == '(') {
@@ -230,70 +294,20 @@ public class Parser {
 		return indexOfClosingBracket;
 	}
 
-	/**
-	 * @param expression expression
-	 * @return is the index of first opening bracket
-	 * if no opening bracket: return -1
-	 */
-	private static int getFirstOpeningBracketsOccurence(String expression) {
-		int firstOpeningBracketIndex = 0;
+	private static char getNextOperator(String expression) {
 		for (int i=0; i<expression.length(); i++) {
-			if (expression.charAt(i) == '(') {
-				firstOpeningBracketIndex = i;
-				break;
-			}
-		}
-		return firstOpeningBracketIndex;
-	}
-	/**
-	 * @param expression expression
-	 * @return is the index of root operator + 1
-	 */
-	private static int getLastOpeningBracketsOccurence(String expression) {
-		int lastOpeningBracketIndex = 0;
-		for (int i=0; i<expression.length(); i++) {
-			if (expression.charAt(i) == '(') {
-				lastOpeningBracketIndex = i;
-			}
-		}
-		return lastOpeningBracketIndex;
-	}
-
-	/**
-	 * @param expression to be parsed
-	 * @param index searching from index as start
-	 * @return the next operator
-	 */
-	private static char getNextOperator(String expression, int index) {
-		assert(index < expression.length());
-		for (int i=0; i<expression.length(); i++) {
-			char currentChar = expression.charAt(index);
-			if (isOperator(currentChar, operators)) {
+			char currentChar = expression.charAt(i);
+			if (isOperator(currentChar)) {
 				return currentChar;
 			}
 		}
+		// No next operator
 		return 0;
 	}
 
-	/**
-	 *
-	 * @param c
-	 * @param operators all allowed operators
-	 * @return the position of c in operators
-	 * -1 if not in operators
-	 */
-	private static int whichOperator(char c, char[] operators) {
+	private static boolean isOperator(char c) {
 		for (int i=0; i<operators.length; i++) {
-			if (operators[i] == c) {
-				return i;
-			}
-		}
-		return -1;
-	}
-
-	private static boolean isOperator(char c, char[] operators) {
-		for (char operator: operators) {
-			if (c == operator) {
+			if (c == operators[i]) {
 				return true;
 			}
 		}
@@ -303,14 +317,12 @@ public class Parser {
 	private static ArrayList<Integer> getAllOperatorIndexInExpression(String expression) {
 		ArrayList<Integer> indexe = new ArrayList<>();
 		for (int i=0; i<expression.length(); i++) {
-			if (isOperator(expression.charAt(i), operators)) {
+			if (isOperator(expression.charAt(i))) {
 				indexe.add(i);
 			}
 		}
 		return indexe;
 	}
 
-	public static  boolean evaluate(AST<Character> vars) {
-		return false;
-	}
+
 }
