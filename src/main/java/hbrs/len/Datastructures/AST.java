@@ -22,6 +22,10 @@ public class AST<T> {
 		this.root = root;
 	}
 
+	public AST(AST<T> root) {
+		this.root = root.getRoot();
+	}
+
 	public Node<T> getRoot() {
 		return root;
 	}

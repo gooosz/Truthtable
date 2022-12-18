@@ -2,11 +2,21 @@ package hbrs.len;
 
 import hbrs.len.Datastructures.AST;
 import hbrs.len.Datastructures.Node;
+import hbrs.len.LogikModul.Expression;
 import hbrs.len.Parser.Parser;
+import hbrs.len.Parser.Parser2;
+
+import java.util.ArrayList;
 
 public class Main {
 	public static void main(String[] args) {
-		testParseAST();
+		testParser2();
+	}
+
+	public static void testParser2() {
+		String f = "!(a&b)|!c|a";
+		Expression e = Parser2.parseExpression(f);
+		System.out.println(e);
 	}
 
 	public static void testAST() {
@@ -21,11 +31,11 @@ public class Main {
 	}
 
 	public static void testParseAST() {
-		//String f = "((a>b)&(d|e))";
+		//String f = "(a>b)&(d|e)";
 		//String f = "((a|b)&c)";
-		String f = "!((a&b)|!c)";
+		String f = "!(a|b)&c|!d";
 		AST<Character> r = new AST<>();
-		Parser.parseIntoAST(f, r);
+		Parser.parseExpressionIntoAST(f, r);
 		System.out.println(r.toString());
 	}
 }

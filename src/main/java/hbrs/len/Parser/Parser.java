@@ -15,7 +15,7 @@ public class Parser {
 	 * !: Negation
 	 * with brackets
 	 */
-	public static final char[] operators = {'&', '|', '>', '!', '(', ')'};
+	public static final char[] operators = {'&', '|', '>', '!'};
 
 
 	public static String getExpression() {
@@ -25,6 +25,10 @@ public class Parser {
 		expression = newExpression;
 	}
 
+	public static void parseExpression(String expression) {
+
+	}
+
 	/**
 	 *
 	 * @param expression formel
@@ -32,8 +36,8 @@ public class Parser {
 	 * parses expression and creates an Abstract Syntax Tree
 	 * out of it
 	 */
-	public static void parseIntoAST(String expression, AST<Character> astOfVar) {
-		if (expression == null || expression.equals("")) {
+	public static void parseExpressionIntoAST(String expression, AST<Character> astOfVar) {
+		if (expression == null || expression.length() == 0) {
 			return;
 		}
 		// just an operator
@@ -42,37 +46,66 @@ public class Parser {
 			return;
 		}
 
-		int operatorenCounterIndex = 0;
+		// fill positionsOfOperators with the positions of operators in expression
+		ArrayList<Integer> posOfOperatorsInExpression = getAllOperatorIndexInExpression(expression);
+		if (posOfOperatorsInExpression.size() == 0) {
+			return;
+		}
+
+		int nextOperatorIndexInExpression = posOfOperatorsInExpression.get(0);
+		char nextOperator = expression.charAt(nextOperatorIndexInExpression);
+		if (nextOperator == '!') {
+			/*
+			 * check if immediately after () of !
+			 * follows another operator
+			 * that operator is root then
+			*/
+			if (nextOperatorIndexInExpression+1 < expression.length()) {
+				char charAfterNegation = expression.charAt(nextOperatorIndexInExpression+1);
+				if (charAfterNegation == '(') {
+					// search for closing brackets
+					int indexOfClosingBracket = getClosingBracketIndexToOpenBracket(expression,
+								nextOperatorIndexInExpression+1);
+					if (indexOfClosingBracket+1 < expression.length()) {
+						// operator afterwards is root
+						passRootIntoAST(expression,
+							astOfVar,
+							indexOfClosingBracket+1,
+							true,
+							true);
+						return;
+					} else {
+						// No operator after brackets -> '!' is root
+						passRootIntoAST(expression,
+							astOfVar,
+							nextOperatorIndexInExpression,
+							false,
+							true);
+						return;
+					}
+				} else {
+					// No bracket aka ! is root
+					passRootIntoAST(expression,
+						astOfVar,
+						nextOperatorIndexInExpression,
+						false,
+						true);
+					return;
+				}
+			}
+		}
+		/*
 		if (getNextOperator(expression, operatorenCounterIndex) == '!') {
 			astOfVar.setRoot(new Node<>('!'));
 			int indexOfNegation = expression.indexOf('!');
 			assert(indexOfNegation >= 0);
 			String subexpression = expression.substring(indexOfNegation+1);
 			AST<Character> negationFormel = new AST<>();
-			parseIntoAST(subexpression, negationFormel);
+			parseExpressionIntoAST(subexpression, negationFormel);
 			astOfVar.add(negationFormel);
 			return;
 		}
-
-		ArrayList<Integer> posOfOperatorsInExpression = new ArrayList<>(0);
-		// fill positionsOfOperators with the positions of operators in expression
-		for (int i=0; i<expression.length(); i++) {
-			/*
-			 * generally: next operator is at index i+2
-			 * special case: operator = '!' may be after every other operator
-			 * 	or at the very beginning of expression
-			 *
-			*/
-			char nextOperator = getNextOperator(expression, i);
-			if (nextOperator == ' ') {
-				/*
-				 * no more operator in expression
-				 * finished parsing all operators
-				 */
-				break;
-			}
-			posOfOperatorsInExpression.add(i);
-		}
+		*/
 
 		//astOfVar = new AST<>();
 		/*
@@ -114,45 +147,54 @@ public class Parser {
 			// root is in the brackets
 			String subexpression = expression.substring(firstBracketsIndex+1,
 									lastBracketsIndex);
-			parseIntoAST(subexpression, astOfVar);
+			parseExpressionIntoAST(subexpression, astOfVar);
 			return;
 		}
 
+		// ↑ Works ↑ !
+
+		passRootIntoAST(expression, astOfVar, indexOfOperatorAfterBrackets, true, true);
+	}
+
+	private static void passRootIntoAST(String expression,
+					    AST<Character> astOfVar,
+					    int indexOfRootOperator,
+					    boolean hasLeftChild,
+					    boolean hasRightChild) {
 		/*
 		 * check for negation
 		 * negation might be "!!!!!!!!!(expression)"
 		 * so go left one more to get to the root operator
-		*/
-		char rootOperator = expression.charAt(indexOfOperatorAfterBrackets);
+		 */
+		char rootOperator = expression.charAt(indexOfRootOperator);
 		astOfVar.setRoot(new Node<>(rootOperator));
-
-
-
-		// ↑ Works ↑ !
-
 
 		/*
 		 * 2:
 		 *
 		 * Construct the leftChild AST from root
 		 * so everything left from rootOperator
-		*/
+		 */
 		//int leftSubexpressionEndIndex = indexOfOperatorAfterBrackets - 1;
-		String leftSubexpression = expression.substring(0, indexOfOperatorAfterBrackets);
-		AST<Character> left = new AST<>();
-		parseIntoAST(leftSubexpression, left);
-		astOfVar.add(left);
+		if (hasLeftChild) {
+			String leftSubexpression = expression.substring(0, indexOfRootOperator);
+			AST<Character> left = new AST<>();
+			parseExpressionIntoAST(leftSubexpression, left);
+			astOfVar.add(left);
+		}
 
 		/*
 		 * 2:
 		 *
 		 * Construct the rightChild AST from root
 		 * so everything right from rootOperator
-		*/
-		String rightSubexpression = expression.substring(indexOfOperatorAfterBrackets+1);
-		AST<Character> right = new AST<>();
-		parseIntoAST(rightSubexpression, right);
-		astOfVar.add(right);
+		 */
+		if (hasRightChild) {
+			String rightSubexpression = expression.substring(indexOfRootOperator+1);
+			AST<Character> right = new AST<>();
+			parseExpressionIntoAST(rightSubexpression, right);
+			astOfVar.add(right);
+		}
 	}
 
 	/**
@@ -224,19 +266,13 @@ public class Parser {
 	 */
 	private static char getNextOperator(String expression, int index) {
 		assert(index < expression.length());
-		char currentChar = expression.charAt(index);
-		int operatorIndex = whichOperator(currentChar, operators);
-		if (operatorIndex == -1) {
-			// Not an operator
-			// Check if expression isn't at end yet
-			if (index < expression.length()-1) {
-				return getNextOperator(expression, index+1);
-			} else {
-				// No next operator found
-				return ' ';
+		for (int i=0; i<expression.length(); i++) {
+			char currentChar = expression.charAt(index);
+			if (isOperator(currentChar, operators)) {
+				return currentChar;
 			}
 		}
-		return operators[operatorIndex];
+		return 0;
 	}
 
 	/**
@@ -253,6 +289,25 @@ public class Parser {
 			}
 		}
 		return -1;
+	}
+
+	private static boolean isOperator(char c, char[] operators) {
+		for (char operator: operators) {
+			if (c == operator) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static ArrayList<Integer> getAllOperatorIndexInExpression(String expression) {
+		ArrayList<Integer> indexe = new ArrayList<>();
+		for (int i=0; i<expression.length(); i++) {
+			if (isOperator(expression.charAt(i), operators)) {
+				indexe.add(i);
+			}
+		}
+		return indexe;
 	}
 
 	public static  boolean evaluate(AST<Character> vars) {
