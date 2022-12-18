@@ -121,7 +121,7 @@ public class Parser {
 	 *        (a&b)|(c&d)
 	 * @return the top-level operator
 	 */
-	public static ArrayList<Integer> getRootOperatorIndexe(String expression) {
+	private static ArrayList<Integer> getRootOperatorIndexe(String expression) {
 		if (expression == null || expression.length() == 0 || expression.length() == 1) {
 			return null;
 		}
@@ -166,7 +166,7 @@ public class Parser {
 		return rootOperatorsIndexe;
 	}
 
-	public static void removeNegationIfNotRoot(String expression, ArrayList<Integer> indexOfRootOperators) {
+	private static void removeNegationIfNotRoot(String expression, ArrayList<Integer> indexOfRootOperators) {
 		if (indexOfRootOperators == null) {
 			return;
 		}
@@ -192,7 +192,7 @@ public class Parser {
 	 * (a&b) returns null
 	 * a&b returns position of &
 	 */
-	public static ArrayList<Integer> getOperatorIndexOutOfBrackets(String expression) {
+	private static ArrayList<Integer> getOperatorIndexOutOfBrackets(String expression) {
 		ArrayList<Integer> positionsOfOperators = new ArrayList<>();
 		int[] outerBrackets = getOuterBracketIndexe(expression);
 		// (a&b)
@@ -224,37 +224,6 @@ public class Parser {
 						openBracketIndex);
 		return new int[]{openBracketIndex, closeBracketIndex};
 	}
-
-	private static boolean isNegated(String expression) {
-		if (expression == null || expression.length() == 0) {
-			return false;
-		}
-		return (expression.charAt(0) == '!');
-	}
-
-	/**
-	 *
-	 * @return Expression that has the operator c as
-	 */
-	private static Expression passOperatorAsRootOperator(String expression,
-							     char rootOperator,
-							     int indexOfRootOperator,
-							     boolean hasLeftSubexpression,
-							     boolean hasRightSubexpression) {
-		Expression root = new Expression(rootOperator);
-
-		if (hasLeftSubexpression) {
-			String leftSubexpression = expression.substring(0, indexOfRootOperator);
-			root.add(parseExpression(leftSubexpression));
-		}
-
-		if (hasRightSubexpression) {
-			String rightSubexpression = expression.substring(indexOfRootOperator+1);
-			root.add(parseExpression(rightSubexpression));
-		}
-		return root;
-	}
-
 
 	private static int getNextBracketIndex(String expression) {
 		for (int i=0; i<expression.length(); i++) {
@@ -294,17 +263,6 @@ public class Parser {
 		return indexOfClosingBracket;
 	}
 
-	private static char getNextOperator(String expression) {
-		for (int i=0; i<expression.length(); i++) {
-			char currentChar = expression.charAt(i);
-			if (isOperator(currentChar)) {
-				return currentChar;
-			}
-		}
-		// No next operator
-		return 0;
-	}
-
 	private static boolean isOperator(char c) {
 		for (int i=0; i<operators.length; i++) {
 			if (c == operators[i]) {
@@ -313,16 +271,4 @@ public class Parser {
 		}
 		return false;
 	}
-
-	private static ArrayList<Integer> getAllOperatorIndexInExpression(String expression) {
-		ArrayList<Integer> indexe = new ArrayList<>();
-		for (int i=0; i<expression.length(); i++) {
-			if (isOperator(expression.charAt(i))) {
-				indexe.add(i);
-			}
-		}
-		return indexe;
-	}
-
-
 }
