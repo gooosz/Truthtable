@@ -125,7 +125,7 @@ public class Parser {
 		StringBuilder sb = expressionToStringRecursive(e, new StringBuilder(50));
 		return sb.toString();
 	}
-	public static StringBuilder expressionToStringRecursive(Expression e, StringBuilder sb) {
+	private static StringBuilder expressionToStringRecursive(Expression e, StringBuilder sb) {
 		// All children of e are in ()
 		if (e == null) {
 			return sb;
