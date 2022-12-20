@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Truthtable:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Truthtable_jar</output-path>
+    <root id="archive" name="Truthtable.jar">
+      <element id="module-output" name="Truthtable" />
+    </root>
+  </artifact>
+</component>

@@ -124,24 +124,6 @@ public class Main {
 		System.out.println("Error: " + msg);
 	}
 
-	public static void testParser2ExpressionBackToString() {
-		String f = "(a&b)";
-		Expression e = Parser.parseExpression(f);
-		System.out.println(e);
-		String s = Parser.expressionToString(e);
-		System.out.println(s);
-	}
-
-	public static void testParserBooleanValues() {
-		String f = "!a";
-		Expression e = Parser.parseExpression(f);
-
-		boolean[] belegung = {false};
-		char[] vars = Parser.getAllVariablesInOrder(f);
-
-		boolean ergebnis = Parser.parseExpressionToBoolean(e, vars, belegung);
-		System.out.println(ergebnis);
-	}
 	public static void printUsage() {
 		String usage = "\nUsage\n\n"
 			+ "A valid expression looks like some of the following:\n"
