@@ -381,7 +381,7 @@ public class Parser {
 		// No bracket found
 		return -1;
 	}
-	private static
+	public static
 	int getClosingBracketIndexFromOpenBracket(String expression,
 						  int openBracketIndex) {
 		assert(openBracketIndex > 0 && openBracketIndex < expression.length());
