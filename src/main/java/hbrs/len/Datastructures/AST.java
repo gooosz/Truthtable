@@ -7,8 +7,6 @@
 
 package hbrs.len.Datastructures;
 
-import java.util.Iterator;
-
 public class AST<T> {
 	private Node<T> root;
 

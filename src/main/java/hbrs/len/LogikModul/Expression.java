@@ -3,7 +3,6 @@ package hbrs.len.LogikModul;
 import hbrs.len.Datastructures.AST;
 import hbrs.len.Datastructures.Node;
 
-import java.util.ArrayList;
 
 public class Expression extends AST<Character> {
 	public Expression() {
