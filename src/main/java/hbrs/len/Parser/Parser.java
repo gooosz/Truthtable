@@ -117,8 +117,93 @@ public class Parser {
 		return root;
 	}
 
-	public static BooleanExpression parseExpressionTreeToBooleanTree() {
-		return null;
+	/**
+	 * @param vars all variables boolean value in order of appearance in expression
+	 * @return
+	 */
+	public static boolean parseExpressionToBoolean(Expression e ,char[] variables, boolean[] variablesBoolean) {
+		assert(e != null);
+		if (e.getRoot().isEmpty()) {
+			// return the boolean value of e
+			return getVariableBelegung(
+						variables,
+						variablesBoolean,
+						e.getRoot().getValue()
+			);
+		}
+
+		// Operator
+		char operator = e.getRoot().getValue();
+		switch (operator) {
+		case '&' -> {
+			// AND of all children's values
+			boolean and = true;	// init value is neutral value for conjunction
+			for (int i=0; i<e.getRoot().getChildren().size(); i++) {
+				Expression child = new Expression(e.getRoot().getChildren(i));
+				and &= parseExpressionToBoolean(child, variables, variablesBoolean);
+			}
+			return and;
+		}
+		case '|' -> {
+			// OR of all children's values
+			boolean or = false;	// init value is neutral value for disjunction
+			for (int i=0; i<e.getRoot().getChildren().size(); i++) {
+				Expression child = new Expression(e.getRoot().getChildren(i));
+				or |= parseExpressionToBoolean(child, variables, variablesBoolean);
+			}
+			return or;
+		}
+		case '>' -> {
+			/*
+			 * a>b is equivalent to !a|b
+			*/
+			// > of all children's values
+			boolean impl = true;	// init value is neutral value for implication
+			for (int i=0; i<e.getRoot().getChildren().size(); i++) {
+				Expression child = new Expression(e.getRoot().getChildren(i));
+				// a->b = !a|b
+				// so negate the former value of the implication
+				impl = !impl | parseExpressionToBoolean(child, variables, variablesBoolean);
+			}
+			return impl;
+		}
+		case '!' -> {
+			// '!' can only be the operator for one subexpression
+			Expression child = new Expression(e.getRoot().getChildren(0));
+			return !parseExpressionToBoolean(child, variables, variablesBoolean);
+		}
+		}
+		// shouldn't be called, but just in case the expression is 'a'
+		return getVariableBelegung(
+			variables,
+			variablesBoolean,
+			e.getRoot().getValue()
+		);
+	}
+
+	/**
+	 * @param vars all variables in expression in order of appearance
+	 * @param belegungen all boolean values of variables
+	 * @param c a variable
+	 * @return the boolean value of c
+	 */
+	public static boolean getVariableBelegung(char[] vars, boolean[] belegungen, char c) {
+		assert(vars != null);
+		assert(belegungen != null);
+		assert(!isOperator(c));
+		assert(c != '(');
+		assert(c != ')');
+		assert(vars.length == belegungen.length);
+
+		for (int i=0; i<vars.length; i++) {
+			if (vars[i] == c) {
+				return belegungen[i];
+			}
+		}
+		/*
+		 * Not found -> shouldn't be the case under any circumstances!!!
+		 */
+		return false;
 	}
 
 	public static String expressionToString(Expression e) {
@@ -151,6 +236,30 @@ public class Parser {
 		}
 		subsb.append(")");
 		return subsb;
+	}
+
+	public static char[] getAllVariablesInOrder(String expression) {
+		ArrayList<Character> variables = new ArrayList<>();
+		for (int i=0; i<expression.length(); i++) {
+			char c = expression.charAt(i);
+			if (!isOperator(c)
+				&& c != '('
+				&& c != ')'
+				&& !variables.contains(c))
+			{
+				variables.add(c);
+			}
+		}
+
+		char[] variablesArray = new char[variables.size()];
+		for (int i=0; i< variables.size(); i++) {
+			variablesArray[i] = variables.get(i);
+		}
+		return variablesArray;
+	}
+
+	public static char[] getAllVariablesInOrder(Expression e) {
+		return getAllVariablesInOrder(Parser.expressionToString(e));
 	}
 
 	/**
