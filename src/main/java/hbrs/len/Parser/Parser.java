@@ -1,11 +1,14 @@
 package hbrs.len.Parser;
 
+import hbrs.len.LogikModul.BooleanExpression;
 import hbrs.len.LogikModul.Expression;
 
 import java.util.ArrayList;
 
 public class Parser {
 	private static final char[] operators = {'&', '|', '>', '!'};
+
+
 	public static Expression parseExpression(String expression) {
 		if (expression == null || expression.length() == 0) {
 			return null;
@@ -112,6 +115,42 @@ public class Parser {
 			root.add(rightChild);
 		}
 		return root;
+	}
+
+	public static BooleanExpression parseExpressionTreeToBooleanTree() {
+		return null;
+	}
+
+	public static String expressionToString(Expression e) {
+		StringBuilder sb = expressionToStringRecursive(e, new StringBuilder(50));
+		return sb.toString();
+	}
+	public static StringBuilder expressionToStringRecursive(Expression e, StringBuilder sb) {
+		// All children of e are in ()
+		if (e == null) {
+			return sb;
+		}
+		if (e.getRoot().isEmpty()) {
+			return new StringBuilder(String.valueOf(e.getRoot().getValue()));
+		}
+
+		StringBuilder subsb = new StringBuilder(50);
+		if (e.getRoot().getValue() == '!') {
+			subsb.append("!");
+			Expression child = new Expression(e.getRoot().getChildren(0));
+			subsb.append(expressionToStringRecursive(child, sb));
+			return subsb;
+		}
+		subsb.append("(");
+		for (int i=0; i<e.getRoot().getChildren().size()-1; i++) {
+			Expression child = new Expression(e.getRoot().getChildren(i));
+			subsb.append(expressionToStringRecursive(child, sb));
+			subsb.append(e.getRoot().getValue());
+			Expression nextChild = new Expression(e.getRoot().getChildren(i+1));
+			subsb.append(expressionToStringRecursive(nextChild, sb));
+		}
+		subsb.append(")");
+		return subsb;
 	}
 
 	/**
