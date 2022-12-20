@@ -18,7 +18,7 @@ You can chain those expressions together obviously
 
 ### Build
 
-> git clone https://github.com/gooosz/Truthtable.git
+> `git clone https://github.com/gooosz/Truthtable.git`
 
 and compile it using IntelliJ or other IDE's
 
