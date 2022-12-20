@@ -20,10 +20,10 @@ public class Main {
 	}
 
 	public static void testParserBooleanValues() {
-		String f = "a&b&c";
+		String f = "!a";
 		Expression e = Parser.parseExpression(f);
 
-		boolean[] belegung = {true, true, true};
+		boolean[] belegung = {false};
 		char[] vars = Parser.getAllVariablesInOrder(f);
 
 		boolean ergebnis = Parser.parseExpressionToBoolean(e, vars, belegung);

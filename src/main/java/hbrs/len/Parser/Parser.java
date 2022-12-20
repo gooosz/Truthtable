@@ -1,6 +1,5 @@
 package hbrs.len.Parser;
 
-import hbrs.len.LogikModul.BooleanExpression;
 import hbrs.len.LogikModul.Expression;
 
 import java.util.ArrayList;
