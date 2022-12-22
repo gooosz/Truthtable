@@ -22,10 +22,23 @@ You can chain those expressions together obviously
 
 and compile it using IntelliJ or other IDE's
 
+#### Or
+
+run from the command line
+> `mvn clean install`
+
+this builds a JAR file called `Truthtable.jar` <br/>
+inside ```./out/artifacts/Truthtable_jar/```
+
 ### Run
 
 To get actual output run
-> java -jar truthtable.jar "expression"
+> ```java -jar truthtable.jar "expression"```
 
-where truthtable.jar is the JAR archive and expression <br/>
+where ```truthtable.jar``` is the JAR and ```expression``` <br/>
 the expression as a string in quotation marks
+
+### Example
+
+A truthtable for the expression ```a&b``` looks like this <br/>
+![](example.png)
