@@ -9,7 +9,7 @@ such as:
 
 > subjunction: ```a>b```
 
-> negation: ```!a```
+> negation: ```!(a)```
 
 You can chain those expressions together obviously
 
