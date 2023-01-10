@@ -20,7 +20,8 @@ public class Main {
 		if (testUserInputForErrors(args[0])) {
 			return;
 		}
-		printTruthTable(Parser.parseExpression(args[0]));
+		//printTruthTable(Parser.parseExpression(args[0]));
+		System.out.println(truthtableToString(Parser.parseExpression(args[0])));
 	}
 
 	public static boolean[][] binaryValues(int anzahlVariables) {
@@ -86,21 +87,23 @@ public class Main {
 		return false;
 	}
 
-	public static void printTruthTable(Expression e) {
+	public static String truthtableToString(Expression e) {
 		assert(e != null);
+		String truthtable = "";
+
 		char[] vars = Parser.getAllVariablesInOrder(e);
 		String printingLine = String.valueOf(vars[0]);
 		for (int i=1; i<vars.length; i++) {
 			printingLine += "\t│\t" + vars[i];
 		}
 		printingLine += "\t│\t" + Parser.expressionToString(e);
-		System.out.println(printingLine);
+		truthtable += printingLine + "\n";
 		// next line in output
 		printingLine = "";
 		for (int i=0; i<50; i++) {
 			printingLine += "─";
 		}
-		System.out.println(printingLine);
+		truthtable += printingLine + "\n";
 		// next line in output
 		// first line of boolean values -> everything is false
 		boolean[][] booleanValues = binaryValues(vars.length);
@@ -108,16 +111,16 @@ public class Main {
 		for (int i=0; i<booleanValues.length; i++) {
 			for (int j=0; j<booleanValues[i].length; j++) {
 				int value = (booleanValues[i][j]) ? 1 : 0;
-				System.out.print(value + "\t");
+				truthtable += value + "\t";
 				if (j < booleanValues[i].length-1) {
-					System.out.print("\t");
+					truthtable += "\t";
 				}
 			}
 			boolean ergebnisOfLine = Parser.parseExpressionToBoolean(e, vars, booleanValues[i]);
 			int value = (ergebnisOfLine) ? 1 : 0;
-			System.out.println("│\t" + value);
+			truthtable += "│\t" + value + "\n";
 		}
-
+		return truthtable;
 	}
 
 	public static void printErrorMessage(String msg) {

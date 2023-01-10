@@ -1,5 +1,6 @@
 import hbrs.len.LogikModul.Expression;
 import hbrs.len.Parser.Parser;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -41,5 +42,13 @@ public class ParserTest {
 		e = Parser.parseExpression(expression);
 		assertEquals("!\n" +
 			"└── a", e.toString());
+	}
+
+	@Test
+	public void testParserExpressionTreeToString() {
+		String formel = "a&b";
+		Expression e = Parser.parseExpression(formel);
+		String formelFromExpression = Parser.expressionToString(e);
+		assertEquals("(" + formel + ")", formelFromExpression);
 	}
 }
