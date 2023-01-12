@@ -20,8 +20,93 @@ public class Main {
 		if (testUserInputForErrors(args[0])) {
 			return;
 		}
+		//String truthtable = truthtableToString(Parser.parseExpression(args[0]));
 		//printTruthTable(Parser.parseExpression(args[0]));
-		System.out.println(truthtableToString(Parser.parseExpression(args[0])));
+		//Expression e = Parser.parseExpression(args[0]);
+
+		//System.out.println(truthtableToString(e, truthtableAsArray(e)));
+		Expression e = Parser.parseExpression(args[0]);
+		boolean[][] wtable = truthtableAsArray(e);
+		String dnf = equivalentDNF(Parser.getAllVariablesInOrder(e), wtable);
+		System.out.println(truthtableToString(e));
+		System.out.println("CNF: " + equivalentCNF(Parser.getAllVariablesInOrder(e), wtable));
+		System.out.println("DNF: " + equivalentDNF(Parser.getAllVariablesInOrder(e), wtable));
+	}
+
+	/**
+	 * @param vars are all variables in expression in order
+	 * @param wtable is the truthtable values
+	 * @return an equivalent CNF to the given expression
+	 */
+	public static String equivalentCNF(char[] vars, boolean[][] wtable) {
+		//TODO doesn't work right yet
+		String cnf = "";
+		/*
+		 * go through evaluation of truthtable
+		 * by looping over lines and checking the last entry
+		 */
+		for (int line=0; line<wtable.length; line++) {
+			boolean evaluateLine = wtable[line][wtable[line].length-1];
+			if (!evaluateLine) {
+				// check for previous "|" in dnf
+				if (cnf.length() > 0 && cnf.charAt(cnf.length()-1) != '&') {
+					cnf += "&";
+				}
+				// get all vars of that line
+				// those vars form a 'Klausel'
+				String klausel = "";
+				for (int i=0; i<wtable[line].length-1; i++) {
+					if (wtable[line][i]) {
+						// negate
+						klausel += "!";
+					}
+					klausel += vars[i];
+					if (i < wtable[line].length-1-1) {
+						klausel += "|";
+					}
+				}
+				cnf += "(" + klausel + ")";
+			}
+		}
+		return cnf;
+	}
+
+	/**
+	 * @param vars are the variable in expression in order
+	 * @param wtable is the boolean values of truthtable
+	 * @return an equivalent DNF to the given expression
+	 */
+	public static String equivalentDNF(char[] vars, boolean[][] wtable) {
+		String dnf = "";
+		/*
+		 * go through evaluation of truthtable
+		 * by looping over lines and checking the last entry
+		*/
+		for (int line=0; line<wtable.length; line++) {
+			boolean evaluateLine = wtable[line][wtable[line].length-1];
+			if (evaluateLine) {
+				// check for previous "|" in dnf
+				if (dnf.length() > 0 && dnf.charAt(dnf.length()-1) != '|') {
+					dnf += "|";
+				}
+				// get all vars of that line
+				// those vars form a 'Klausel'
+				String klausel = "";
+				for (int i=0; i<wtable[line].length-1; i++) {
+					if (!wtable[line][i]) {
+						// negate
+						klausel += "!";
+					}
+						// negate
+					klausel += vars[i];
+					if (i < wtable[line].length-1-1) {
+						klausel += "&";
+					}
+				}
+				dnf += "(" + klausel + ")";
+			}
+		}
+		return dnf;
 	}
 
 	public static boolean[][] binaryValues(int anzahlVariables) {
@@ -85,6 +170,60 @@ public class Main {
 		}
 		// input should be ok now
 		return false;
+	}
+
+	public static boolean[][] truthtableAsArray(Expression e) {
+		assert(e != null);
+
+		char[] vars = Parser.getAllVariablesInOrder(e);
+		boolean[][] wahrheitswerte = new boolean[(int)Math.pow(2, vars.length)][vars.length+1];
+
+		// first line of boolean values -> everything is false
+		boolean[][] booleanValues = binaryValues(vars.length);
+		assert(booleanValues != null);
+		for (int i=0; i<booleanValues.length; i++) {
+			for (int j=0; j<booleanValues[i].length; j++) {
+				wahrheitswerte[i][j] = booleanValues[i][j];
+			}
+			boolean ergebnisOfLine = Parser.parseExpressionToBoolean(e, vars, booleanValues[i]);
+			wahrheitswerte[i][wahrheitswerte[i].length-1] = ergebnisOfLine;
+		}
+		return wahrheitswerte;
+	}
+
+	public static String truthtableToString(Expression e, boolean[][] w) {
+		assert(e != null);
+		assert(w != null);
+		String truthtable = "";
+
+		char[] vars = Parser.getAllVariablesInOrder(e);
+		String printingLine = String.valueOf(vars[0]);
+		for (int i=1; i<vars.length; i++) {
+			printingLine += "\t│\t" + vars[i];
+		}
+		printingLine += "\t│\t" + Parser.expressionToString(e);
+		truthtable += printingLine + "\n";
+		// next line in output
+		printingLine = "";
+		for (int i=0; i<50; i++) {
+			printingLine += "─";
+		}
+		truthtable += printingLine + "\n";
+		// next line in output
+		for (int i=0; i<w.length; i++) {
+			for (int j=0; j<w[i].length-1; j++) {
+				boolean value = w[i][j];
+				truthtable += (value) ? 1 : 0;
+				truthtable += "\t";
+				if (j < w[i].length-2) {
+					truthtable += "\t";
+				}
+			}
+			boolean ergebnisOfLine = Parser.parseExpressionToBoolean(e, vars, w[i]);
+			int value = (ergebnisOfLine) ? 1 : 0;
+			truthtable += "│\t" + value + "\n";
+		}
+		return truthtable;
 	}
 
 	public static String truthtableToString(Expression e) {
